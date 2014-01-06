@@ -1,0 +1,12 @@
+GaChalign (ガチャalign) is a python implementation of Gale-Church (1993) sentence aligner with options for variable parameters (viz. mean, variance, penalty).
+
+## FILES
+* Test Suites ('ntumc.eng' and 'ntumc.jpn are English and Japanese sentences from NTU-MC; 'eng-jpn.human' are the human-aligned sentences)
+* gale-church.py (main module for the algorithm)
+* math.py (module if scipy.stats.norm don't import properly)
+* GaChalign.pdf (Technical Report for the experiment on English-Japanese alignments with Gale-Church algorithm)
+
+For more details, see http://code.google.com/p/gachalign/
+
+
+
