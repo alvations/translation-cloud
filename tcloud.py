@@ -1,29 +1,113 @@
 #!/usr/bin/env python -*- coding: utf-8 -*-
-import sys; reload(sys); sys.setdefaultencoding("utf-8")
 
-import galechurch
-import codecs, os
+import codecs, os, random
+import sys; reload(sys); sys.setdefaultencoding("utf-8")
 from collections import Counter, defaultdict
 from itertools import chain
+import numpy as np
+from PIL import Image, ImageDraw, ImageFont
+from query_integral_image import query_integral_image as qii
+import galechurch 
 
 def sentence_matches(srcfile, trgfile, query, max=10000):
-  for count, sentpair in enumerate(galechurch.align(sfile, tfile)):
+  """" Find sentences pairs that contain query"""
+  for sentpair in galechurch.align(srcfile, trgfile):
     if query in sentpair.split('\t')[0].lower().split():
       yield sentpair
 
 def count_freq(sentences, translations):
+  """ Return src:trgs frequencies as Counter(). """
   return Counter(filter(None, list(chain(*[[j for j in translations \
                                    if j in i.split()] for i in sentences]))))
   
 def corpus2translationcounts(src_corpus, trg_corpus, \
                              query_word, translations=None):
   matches = sentence_matches(src_corpus, trg_corpus, query_word)
-  if translations==None:
-    
-  
   return count_freq(matches, translations)
+
+def draw_cloud(words, counts, width=1028, height=640, margin=5, 
+               font_path="TakaoMincho.ttf", firstcentre=True, printcount=True, 
+               outputfilename = "tcloud.jpg"):
   
+  if printcount:
+    words = [i+"("+str(j)+")" for i,j in zip(words, counts)]
+  
+  """ Takes a sorted words and counts list and saves a the tcloud. """
+  # Initialize proxy image values.
+  fontsizes, positions= [], []
+  integral =  np.zeros((height, width), dtype=np.uint32)
+  img_grey = Image.new('L', (width, height))
+  draw = ImageDraw.Draw(img_grey)
+  
+  # Calculates fontsizes and positions of words.
+  for word, count in zip(words,counts):
+    font_size =  int(count / float(sum(counts)) * 100) * height / 100
+    font_size = font_size * min(width, height) / max(width,height)
+    
+    while True:
+      # Calculates appropriate fontsize of a word.
+      font = ImageFont.truetype(font_path, font_size)
+      # Calculates how much space the word will take.
+      draw.setfont(font)
+      box_size = draw.textsize(word)
+      
+      if firstcentre: # If you want the first item to be centered. 
+        result = (height/4, width/4)
+        firstcentre = False
+      else: # Else use integral image to calculate the position.
+        result = qii(integral, box_size[1] + margin, box_size[0] + margin)
+      ##print font_size, result
+      
+      if result is not None or font_size <= 0:
+        break
+      font_size-=1
+    
+    if printcount and font_size < 50:
+      font_size = 50 
+      
+    
+    # Saves the positions.
+    x, y = np.array(result) + margin // 2
+    draw.text((y, x), word, fill="white")
+    fontsizes.append(font_size) 
+    positions.append((x, y))
+    
+    # Recompute integral image (so that the words don't overlap)
+    img_array = np.asarray(img_grey)
+    # Recompute bottom right
+    partial_integral = np.cumsum(np.cumsum(img_array[x:, y:], axis=1),axis=0)
+    # paste recomputed part into old image222
+    # if x or y is zero it is a bit annoying
+    if x > 0:
+      if y > 0:
+        partial_integral += (integral[x - 1, y:] - integral[x - 1, y - 1])
+      else:
+        partial_integral += integral[x - 1, y:]
+    if y > 0:
+      partial_integral += integral[x:, y - 1][:, np.newaxis]
+    integral[x:, y:] = partial_integral
+  
+  # Redrawing the Image (i.e. the actual drawing of the image)
+  img = Image.new("L", (width, height))
+  draw = ImageDraw.Draw(img)
+  everything = zip(words, fontsizes, positions)
+  
+  for word, font_size, position in everything:
+    font = ImageFont.truetype(font_path, font_size)
+    draw.setfont(font)
+    draw.text((position[1], position[0]), word,
+            fill="hsl(%d" % random.randint(0, 255) + ", 80%, 50%)")
+
+  img.show()
+##endfunc draw_cloud()
 
 sfile, tfile = 'galechurch/ntumc.eng', 'galechurch/ntumc.jpn'
 source = u'food'
 target = [u'フード', u'食物', u'食べ物', u'食料']
+
+freq_input = corpus2translationcounts(sfile, tfile, source, target)
+words, counts = map(list, zip(*[i for i in freq_input.most_common()]))
+words.insert(0,source)
+counts.insert(0,max(counts))
+
+draw_cloud(words, counts, firstcentre=True)
