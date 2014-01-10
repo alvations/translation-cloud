@@ -5,7 +5,7 @@ import sys; reload(sys); sys.setdefaultencoding("utf-8")
 from collections import Counter, defaultdict
 from itertools import chain
 import numpy as np
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 from query_integral_image import query_integral_image as qii
 import galechurch 
 
@@ -25,12 +25,14 @@ def corpus2translationcounts(src_corpus, trg_corpus, \
   matches = sentence_matches(src_corpus, trg_corpus, query_word)
   return count_freq(matches, translations)
 
-def draw_cloud(words, counts, width=1028, height=640, margin=5, 
-               font_path="TakaoMincho.ttf", firstcentre=True, printcount=True, 
-               outputfilename = "tcloud.jpg"):
+def draw_cloud(words, counts, width=1028, height=640, margin=10,
+               font_path="TakaoMincho.ttf", firstcentre=True, printcount=True,
+               ):
   
   if printcount:
     words = [i+"("+str(j)+")" for i,j in zip(words, counts)]
+    
+  outputfilename = words[0]+".jpg"
   
   """ Takes a sorted words and counts list and saves a the tcloud. """
   # Initialize proxy image values.
@@ -95,19 +97,30 @@ def draw_cloud(words, counts, width=1028, height=640, margin=5,
   for word, font_size, position in everything:
     font = ImageFont.truetype(font_path, font_size)
     draw.setfont(font)
-    draw.text((position[1], position[0]), word,
-            fill="hsl(%d" % random.randint(0, 255) + ", 80%, 50%)")
+    #draw.text((position[1], position[0]), word,
+    #        fill="hsl(%d" %  + ", 80%, 50%)")
+    draw.text((position[1], position[0]), word, fill="white")
 
-  img.show()
+  inverted_img = ImageOps.invert(img)
+  inverted_img.show()
 ##endfunc draw_cloud()
 
-sfile, tfile = 'galechurch/ntumc.eng', 'galechurch/ntumc.jpn'
-source = u'food'
-target = [u'フード', u'食物', u'食べ物', u'食料']
 
-freq_input = corpus2translationcounts(sfile, tfile, source, target)
-words, counts = map(list, zip(*[i for i in freq_input.most_common()]))
-words.insert(0,source)
-counts.insert(0,max(counts))
+def main(corpusx, corpusy, query):
+  if os.path.exists(query):
+    with codecs.open(query, 'r', 'utf8') as fin:
+      source, _, targets = fin.read().strip().partition(',')
+      targets = targets.split(',')
+      freq_input = corpus2translationcounts(corpusx, corpusy, source, targets)
+      words, counts = map(list, zip(*[i for i in freq_input.most_common()]))
+      words.insert(0,source)
+      counts.insert(0,max(counts))
+      draw_cloud(words, counts, firstcentre=True)
 
-draw_cloud(words, counts, firstcentre=True)
+if __name__ == '__main__':
+  import sys
+  if len(sys.argv) not in range(3,6):
+    sys.stderr.write('Usage: python %s src_corpus trg_corpus ' 
+                     '(wordlist.txt | src_word)' % sys.argv[0])
+    sys.exit(1)
+  main(*sys.argv[1:])
