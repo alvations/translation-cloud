@@ -22,19 +22,18 @@ def count_freq(sentences, translations):
   
 def corpus2translationcounts(src_corpus, trg_corpus, \
                              query_word, translations=None):
+  """ Counts the frequencies of translation of the query word. """
   matches = sentence_matches(src_corpus, trg_corpus, query_word)
   return count_freq(matches, translations)
 
 def draw_cloud(words, counts, width=1028, height=640, margin=10,
                font_path="TakaoMincho.ttf", firstcentre=True, printcount=True,
                ):
-  
-  if printcount:
+  """ Takes a sorted words and counts list and saves a the tcloud. """
+  if printcount: # If users wants to print counts.
     words = [i+"("+str(j)+")" for i,j in zip(words, counts)]
-    
   outputfilename = words[0]+".jpg"
   
-  """ Takes a sorted words and counts list and saves a the tcloud. """
   # Initialize proxy image values.
   fontsizes, positions= [], []
   integral =  np.zeros((height, width), dtype=np.uint32)
@@ -44,7 +43,8 @@ def draw_cloud(words, counts, width=1028, height=640, margin=10,
   # Calculates fontsizes and positions of words.
   for word, count in zip(words,counts):
     font_size =  int(count / float(sum(counts)) * 100) * height / 100
-    font_size = font_size * min(width, height) / max(width,height)
+    if printcount:
+      font_size = font_size * min(width, height) / max(width,height)
     
     while True:
       # Calculates appropriate fontsize of a word.
@@ -115,7 +115,7 @@ def main(corpusx, corpusy, query):
       words, counts = map(list, zip(*[i for i in freq_input.most_common()]))
       words.insert(0,source)
       counts.insert(0,max(counts))
-      draw_cloud(words, counts, firstcentre=True)
+      draw_cloud(words, counts, firstcentre=True, printcount=False)
 
 if __name__ == '__main__':
   import sys
