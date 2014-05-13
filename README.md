@@ -17,6 +17,7 @@ Pillow install for Debian/Ubuntu:
 ```
  $ sudo apt-get install python-pip python-dev build-essential 
  $ sudo apt-get pip pillow
+ $ sudo pip install cython
 ```
 
 Usage
