@@ -117,6 +117,9 @@ def main(corpusx, corpusy, query):
       counts.insert(0,max(counts))
       draw_cloud(words, counts, firstcentre=True, printcount=False)
 
+main('sherlockholmes/sherlock7.eng', 'sherlockholmes/sherlock7.mcn',  'said_wordlist.txt')
+
+'''
 if __name__ == '__main__':
   import sys
   if len(sys.argv) not in range(3,6):
@@ -124,3 +127,5 @@ if __name__ == '__main__':
                      '(wordlist.txt | src_word)' % sys.argv[0])
     sys.exit(1)
   main(*sys.argv[1:])
+  
+'''
