@@ -112,7 +112,6 @@ def main(corpusx, corpusy, mean=1.0, variance=6.8, bc = BEAD_COSTS):
   mean, variance = map(float,[mean,variance])
   for src,trg in izip(readFile(corpusx),readFile(corpusy)):
     assert src[1] == trg[1]
-    print src[1]
     for (sentence_x, sentence_y) in align_one(src[0], trg[0], mean, variance, bc):
       print sentence_x + "\t" + sentence_y
 

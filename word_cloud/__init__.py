@@ -85,8 +85,9 @@ def draw_cloud(words, counts, width=1028, height=640, margin=100,
         draw.text((position[1], position[0]), word, fill="white")
 
     inverted_img = ImageOps.invert(img)
-    #inverted_img.save(outfilename)
-    inverted_img.show()
     
-x, y = ['said', 'shou', 'what'], [1,2,1]
-draw_cloud(x,y, ranks_only=True)
+    if outfilename:
+        inverted_img.save(outfilename)
+    else:
+        inverted_img.show()
+    
